@@ -1,0 +1,34 @@
+{
+  "name": "js13k2023",
+  "version": "0.0.1",
+  "description": "js13k2023",
+  "devDependencies": {
+    "@open-wc/building-rollup": "^3.0.2",
+    "@rollup/plugin-html": "^1.0.2",
+    "@rollup/plugin-terser": "^0.4.3",
+    "@rollup/plugin-typescript": "^11.1.2",
+    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "eslint": "^8.0.1",
+    "eslint-config-standard-with-typescript": "^38.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+    "eslint-plugin-promise": "^6.0.0",
+    "http-server": "^14.1.1",
+    "npm-run-all2": "^6.0.6",
+    "rollup": "^3.28.0",
+    "rollup-plugin-cleanup": "^3.2.1",
+    "rollup-plugin-commonjs": "^10.0.1",
+    "rollup-plugin-execute": "^1.1.1",
+    "rollup-plugin-html-minifier": "^2.0.0",
+    "rollup-plugin-import-css": "^3.3.1",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-visualizer": "^5.9.2",
+    "typescript": "*"
+  },
+  "scripts": {
+    "build": "tsc & rollup -c",
+    "watch": "tsc & rollup -c -w",
+    "dev": "npm-run-all --parallel start watch",
+    "start": "http-server ./dist"
+  }
+}
