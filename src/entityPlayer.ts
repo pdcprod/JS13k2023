@@ -24,7 +24,7 @@ const movePath = (entity: Partial<Entity>) => {
       }
     })
 
-    entity.flipX = position?.x
+    entity.flipX = position.x && entity.path[entity.pathIndex].x
       ? entity.path[entity.pathIndex].x < position.x
       : false
     entity.pathIndex += 1
