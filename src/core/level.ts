@@ -137,6 +137,13 @@ export class Level {
       }
     }
 
+    // Update grid with new tiles
+    this.grid.forEach((row, i) => {
+      row.forEach((_, j) => {
+        this.grid[i][j] = this.tiles[i][j] > 0 ? 1 : 0
+      })
+    })
+
     this.tiles = matrix
   }
 }
