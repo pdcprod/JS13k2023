@@ -86,11 +86,11 @@ export const createStateGame = (game: Game) => {
 
     update: (dt) => {
       const { camera, canvas, entities, map, player } = game
+      const turnPlayer = game.turnPlayer
 
       stateGameData.elapsedTime += dt
 
       // Camera position
-      const turnPlayer = game.turnPlayer
       if (turnPlayer) {
         camera.x = Math.round(
           turnPlayer.position.x * Sprites.size - canvas.canvas.width / 2
@@ -123,7 +123,7 @@ export const createStateGame = (game: Game) => {
       })
 
       // Player input
-      if (stateGameData.elapsedTime > 3000 && game.input.keys.get(13)) {
+      if (stateGameData.elapsedTime > 3000 && game.input.keys.get(13) && turnPlayer) {
         game.turnNext()
       }
     },
