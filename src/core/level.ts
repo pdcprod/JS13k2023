@@ -15,6 +15,7 @@ const neighbors: Value2D[] = [
 
 export class Level {
   grid: Grid
+  tiles: Grid
   size: number
   density: number
 
@@ -22,6 +23,7 @@ export class Level {
     this.size = size
     this.density = density
     this.grid = this.init()
+    this.tiles = structuredClone(this.grid)
     this.generate(this.grid)
   }
 
@@ -84,15 +86,57 @@ export class Level {
 
   // Destroy blocks in and around the position
   destroy (position: Value2D): void {
-    const { size, grid } = this
+    const { size, grid, tiles } = this
     const { x, y } = position
     grid[x][y] = 0
+    tiles[x][y] = 0
     neighbors.forEach(({ x: dx, y: dy }) => {
       const nx = x + dx
       const ny = y + dy
       if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
         grid[nx][ny] = 0
+        tiles[nx][ny] = 0
       }
     })
+  }
+
+  private isBlockAllOnes (matrix: number[][], i: number, j: number, width: number, height: number): boolean {
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) {
+        if (matrix[i + y][j + x] !== 1) {
+          return false
+        }
+      }
+    }
+    return true
+  }
+
+  private replaceBlock (matrix: number[][], i: number, j: number, replacement: number[][]): void {
+    const width = replacement[0].length
+    const height = replacement.length
+
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) {
+        matrix[i + y][j + x] = replacement[x]?.[y]
+      }
+    }
+  }
+
+  replaceTiles (replacements: number[][][]): void {
+    let replacement = replacements[Math.floor(Math.random() * replacements.length)]
+    const width = replacement[0].length
+    const height = replacement.length
+    const matrix = this.tiles
+
+    for (let i = 0; i <= matrix.length - height; i++) {
+      for (let j = 0; j <= matrix[i].length - width; j++) {
+        if (this.isBlockAllOnes(matrix, i, j, width, height)) {
+          replacement = replacements[Math.floor(Math.random() * replacements.length)]
+          this.replaceBlock(matrix, i, j, replacement)
+        }
+      }
+    }
+
+    this.tiles = matrix
   }
 }

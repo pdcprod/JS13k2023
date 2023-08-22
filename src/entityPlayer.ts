@@ -2,6 +2,7 @@ import { Entity } from './core/entity'
 import { pathfind } from './core/pathfind'
 import { type Value2D } from './core/value2d'
 import { type Game } from './game'
+import Sprites from './sprites'
 
 // Move player along path
 const movePath = (entity: Partial<Entity>) => {
@@ -14,10 +15,10 @@ const movePath = (entity: Partial<Entity>) => {
     tween?.isFinished() &&
     position
   ) {
-    if (entity.pathIndex === undefined) return
+    if (entity.pathIndex === undefined || !entity.path[entity.pathIndex]) return
 
     tween.reset({
-      startValue: { ...position },
+      startValue: position,
       endValue: entity.path[entity.pathIndex],
       onComplete: () => {
         console.log('Tween complete')
@@ -93,8 +94,8 @@ export const createPlayer = (game: Game) => {
 
       // Calculate mouse position
       const mouseTile = {
-        x: Math.floor((input.mouse.x + camera.x) / 16),
-        y: Math.floor((input.mouse.y + camera.y) / 16)
+        x: Math.floor((input.mouse.x + camera.x) / Sprites.size),
+        y: Math.floor((input.mouse.y + camera.y) / Sprites.size)
       }
 
       // Calculate path to mouse
@@ -122,8 +123,8 @@ export const createPlayer = (game: Game) => {
       // Draw tile at position
       if (position && tile) {
         canvas.drawTile({
-          x: Math.round(position.x * 16 - camera.x),
-          y: Math.round(position.y * 16 - camera.y),
+          x: Math.round(position.x * Sprites.size - camera.x),
+          y: Math.round(position.y * Sprites.size - camera.y),
           tile,
           flipX: this.flipX
         })
@@ -132,8 +133,8 @@ export const createPlayer = (game: Game) => {
       // Draw mouse path
       if (mousePath && tile) {
         mousePath.slice(1, (this?.stepsRemaining ?? 0) + 1).forEach((p, i) => {
-          const x = Math.round(p.x * 16 - camera.x)
-          const y = Math.round(p.y * 16 - camera.y)
+          const x = Math.round(p.x * Sprites.size - camera.x)
+          const y = Math.round(p.y * Sprites.size - camera.y)
           canvas.drawTile({
             x,
             y,

@@ -1,4 +1,5 @@
 import { type Value2D } from './value2d'
+import Sprites from '../sprites'
 
 export class Canvas {
   canvas: HTMLCanvasElement
@@ -6,7 +7,7 @@ export class Canvas {
   sprites: HTMLImageElement
   ready = false
   offset: Value2D = { x: 0, y: 0 }
-  tileSize: Value2D = { x: 16, y: 16 }
+  tileSize: Value2D = { x: Sprites.size, y: Sprites.size }
 
   constructor (canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -20,7 +21,34 @@ export class Canvas {
 
   // Clear the canvas
   clear (): void {
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    this.drawRect(0, 0, this.canvas.width, this.canvas.height, '#7e9432')
+  }
+
+  // Convert hex color to RGBA
+  hexToRGBA (hex: string, alpha = 1) {
+    const bigint = parseInt(hex.slice(1), 16)
+    const r = (bigint >> 16) & 255
+    const g = (bigint >> 8) & 255
+    const b = bigint & 255
+    return [r, g, b, alpha]
+  }
+
+  // Draw a single pixel
+  drawPixel (
+    x: number,
+    y: number,
+    r: number,
+    g: number,
+    b: number,
+    a?: number
+  ): void {
+    const id = this.context.createImageData(1, 1)
+    const d = id.data
+    d[0] = r
+    d[1] = g
+    d[2] = b
+    d[3] = Math.round((a ?? 1) * 255)
+    this.context.putImageData(id, x, y)
   }
 
   // Draw a rectangle on the canvas
@@ -138,7 +166,6 @@ export class Canvas {
       baseline = 'top',
       alpha = 1
     } = params
-
     context.globalAlpha = alpha
     context.fillStyle = color
     context.font = font

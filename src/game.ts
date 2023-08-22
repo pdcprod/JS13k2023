@@ -4,7 +4,9 @@ import { type Entity } from './core/entity'
 import { Fog } from './core/fog'
 import { Input } from './core/input'
 import { Level } from './core/level'
+import { Text } from './core/text'
 import { type Value2D } from './core/value2d'
+import Sprites from './sprites'
 
 interface GameOptions {
   init?: () => void
@@ -21,6 +23,7 @@ export class Game {
   entities = new Entities({})
   players: Entity[] = []
   player: Entity | null = null
+  text: Text
 
   canvas = new Canvas(document.getElementById('canvas') as HTMLCanvasElement)
   input = new Input(this.canvas.canvas)
@@ -38,6 +41,7 @@ export class Game {
 
     this.map = new Level(size, density)
     this.fog = new Fog(size)
+    this.text = new Text({ canvas: this.canvas })
 
     if (init) this.init = init
     if (update) this.update = update
@@ -65,12 +69,12 @@ export class Game {
 
   // Rendering methods
   drawMap () {
-    this.map.grid.forEach((row, x) => {
+    this.map.tiles.forEach((row, x) => {
       row.forEach((tile, y) => {
         // Draw tile considering camera position
         this.canvas.drawTile({
-          x: Math.round(x * 16 - this.camera.x),
-          y: Math.round(y * 16 - this.camera.y),
+          x: Math.round(x * Sprites.size - this.camera.x),
+          y: Math.round(y * Sprites.size - this.camera.y),
           tile: tile + 1
         })
       })
@@ -83,10 +87,10 @@ export class Game {
         if (tile === 0) return
         const color = tile < 1 ? `rgba(0, 0, 0, ${tile})` : 'rgba(0, 0, 0, 1)'
         this.canvas.drawRect(
-          Math.round(x * 16 - this.camera.x),
-          Math.round(y * 16 - this.camera.y),
-          16,
-          16,
+          Math.round(x * Sprites.size - this.camera.x),
+          Math.round(y * Sprites.size - this.camera.y),
+          Sprites.size,
+          Sprites.size,
           color
         )
       })

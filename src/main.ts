@@ -4,6 +4,7 @@ import { Loop } from './core/loop'
 import { Tween } from './core/tween'
 import { createPlayer } from './entityPlayer'
 import { Game } from './game'
+import Sprites from './sprites'
 
 const game = new Game({
   size: 64,
@@ -12,15 +13,34 @@ const game = new Game({
   init: () => {
     const { entities, fog, map, players } = game
 
+    // Generate map
+    map.replaceTiles(Sprites.terrain.tree)
+    map.replaceTiles([
+      [[0], [0]]
+    ])
+    map.replaceTiles([
+      [[62, 62]],
+      [[63, 63]]
+    ])
+    map.replaceTiles([
+      [[0]]
+    ])
+    map.tiles.forEach((row, x) => {
+      row.forEach((tile, y) => {
+        // 50% chance to replace with random item from Sprites.terrain.grass
+        if (Math.random() > 0.85 && tile === 0) {
+          map.tiles[x][y] = Sprites.terrain.grass[Math.floor(Math.random() * Sprites.terrain.grass.length)]
+        }
+      })
+    })
+
     // Init 4 Players
     for (let i = 0; i < 4; i++) {
       const position = map.randomQuadPos(i + 1)
       const p = entities.add(createPlayer(game))
 
-      const sprites = [9, 30, 31, 38]
-
       p.npc = i > 0
-      p.tile = sprites[i]
+      p.tile = Sprites.characters[i]
       p.position = position
 
       // Destroy around
@@ -52,7 +72,7 @@ const game = new Game({
   },
 
   update (delta) {
-    const { camera, canvas, entities, input, map, player } = game
+    const { camera, canvas, entities, map, player } = game
 
     // Prevent drawing if canvas is not ready
     if (!canvas.ready || !player) return
@@ -61,21 +81,21 @@ const game = new Game({
     const turnPlayer = game.turnPlayer
     if (turnPlayer) {
       camera.x = Math.round(
-        turnPlayer.position.x * 16 - canvas.canvas.width / 2
+        turnPlayer.position.x * Sprites.size - canvas.canvas.width / 2
       )
       camera.y = Math.round(
-        turnPlayer.position.y * 16 - canvas.canvas.height / 2
+        turnPlayer.position.y * Sprites.size - canvas.canvas.height / 2
       )
     }
 
     // Limit camera position to borders of the level
     camera.x = Math.max(
       0,
-      Math.min(camera.x, map.size * 16 - canvas.canvas.width)
+      Math.min(camera.x, map.size * Sprites.size - canvas.canvas.width)
     )
     camera.y = Math.max(
       0,
-      Math.min(camera.y, map.size * 16 - canvas.canvas.height)
+      Math.min(camera.y, map.size * Sprites.size - canvas.canvas.height)
     )
 
     // Limit player position to level borders
@@ -107,7 +127,7 @@ const game = new Game({
     canvas.drawTile({
       x: Math.floor(input.mouse.x),
       y: Math.floor(input.mouse.y),
-      tile: 16
+      tile: Sprites.cursor[0]
     })
 
     // Clear mouse buttons
@@ -119,26 +139,29 @@ const game = new Game({
 
     canvas.drawRect(
       0,
-      game.canvas.canvas.height - 18,
+      game.canvas.canvas.height - 10,
       game.canvas.canvas.width,
-      18,
+      10,
       'rgb(31, 44, 60)'
     )
-    canvas.drawText({
+    game.text.draw({
       x: 4,
-      y: game.canvas.canvas.height - 14,
-      text: currentPlayer.npc
+      y: game.canvas.canvas.height - 7,
+      string: currentPlayer.npc
         ? 'The enemy is moving forward'
-        : 'Press Enter to finish your turn',
-      color: 'rgb(243, 232, 223)'
+        : 'Press Enter to finish turn',
+      color: '#ffffff'
     })
-    canvas.drawText({
-      x: game.canvas.canvas.width - 4,
-      y: game.canvas.canvas.height - 14,
-      text: `Steps remaining: ${currentPlayer.stepsRemaining}`,
-      align: 'right',
-      color: 'rgb(243, 232, 223)'
-    })
+
+    if (!currentPlayer.npc) {
+      game.text.draw({
+        x: game.canvas.canvas.width - 4,
+        y: game.canvas.canvas.height - 7,
+        align: 'right',
+        string: `Steps: ${currentPlayer.stepsRemaining}`,
+        color: '#ffffff'
+      })
+    }
   }
 })
 

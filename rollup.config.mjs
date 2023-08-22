@@ -74,7 +74,7 @@ export default {
             </style>
           </head>
           <body>
-            <canvas width="426" height="240" id="canvas" />
+            <canvas width="213" height="120" id="canvas" />
             ${template.scripts}
           </body>
           <script>
@@ -85,6 +85,7 @@ export default {
     }),
     execute([
       `npx html-minifier-terser dist/bundle.html  --collapse-whitespace --remove-comments --minify-js ${terserCode} --minify-css true > dist/index.html`,
+      'npx copyfiles --flat src/spritesheet.png ./dist',
       'npx bestzip dist/game.zip dist/index.html src/spritesheet.png',
       `${isWindows ? 'utils\\advzip' : 'advzip'} -z -4 -i 100 dist/game.zip`
     ])
