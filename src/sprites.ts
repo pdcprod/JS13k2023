@@ -16,5 +16,13 @@ export default {
   flags: [51, 52, 53, 54],
   shields: [55, 56, 57, 58],
   characters: Array.from({ length: 31 }, (_, i) => i + 65),
-  cursor: [95, 96]
+  cursor: [95, 96],
+  logo: {
+    size: { x: 64, y: 16 },
+    tile: 11
+  },
+  title: {
+    size: { x: 64, y: 40 },
+    tile: 6
+  }
 }

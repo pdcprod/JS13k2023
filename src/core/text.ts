@@ -84,7 +84,8 @@ export class Text {
     y,
     color,
     align = 'left',
-    size = 1
+    size = 1,
+    opacity = 1
   }: {
     string: string
     x: number
@@ -92,12 +93,13 @@ export class Text {
     color: string
     align?: 'left' | 'center' | 'right'
     size?: number
+    opacity?: number
   }): void {
     string = string.toLowerCase()
     const charWidth = 3 * size + size
     const charHeight = 5 * size
     let startX = x
-    const rgba = this.canvas.hexToRGBA(color, 1)
+    const rgba = this.canvas.hexToRGBA(color, opacity)
 
     if (align === 'center') {
       const totalWidth = string.length * charWidth

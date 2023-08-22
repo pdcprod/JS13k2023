@@ -109,11 +109,6 @@ export const createPlayer = (game: Game) => {
         this.path = mousePath.slice(1, this.stepsRemaining + 1)
         this.pathIndex = 0
       }
-
-      // Player input
-      if (input.keys.get(13)) {
-        game.turnNext()
-      }
     },
 
     draw () {
@@ -126,7 +121,8 @@ export const createPlayer = (game: Game) => {
           x: Math.round(position.x * Sprites.size - camera.x),
           y: Math.round(position.y * Sprites.size - camera.y),
           tile,
-          flipX: this.flipX
+          flipX: this.flipX,
+          shadow: true
         })
       }
 

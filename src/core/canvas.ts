@@ -3,6 +3,7 @@ import Sprites from '../sprites'
 
 export class Canvas {
   canvas: HTMLCanvasElement
+  canvasTemp: HTMLCanvasElement
   context: CanvasRenderingContext2D
   sprites: HTMLImageElement
   ready = false
@@ -12,6 +13,7 @@ export class Canvas {
   constructor (canvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.context = canvas.getContext('2d') as CanvasRenderingContext2D
+    this.canvasTemp = document.createElement('canvas')
     this.sprites = new Image()
     this.sprites.src = 'spritesheet.png'
     this.sprites.onload = () => {
@@ -99,8 +101,9 @@ export class Canvas {
     flipY?: boolean
     angle?: number
     alpha?: number
+    shadow?: boolean
   }): void {
-    const { context, sprites, tileSize } = this
+    const { canvasTemp, context, sprites, tileSize } = this
     const {
       x,
       y,
@@ -110,37 +113,75 @@ export class Canvas {
       flipX = false,
       flipY = false,
       angle = 0,
-      alpha = 1
+      alpha = 1,
+      shadow = false
     } = params
 
     const flip = { x: flipX ? -1 : 1, y: flipY ? -1 : 1 }
     const rotationCenter = { x: x + width / 2, y: y + height / 2 }
 
+    const tileX = ((tile - 1) * width) % sprites.width
+    const tileY = Math.floor(((tile - 1) * width) / sprites.width) * height
+
+    if (!(tileX >= 0 && tileY >= 0)) return
+
+    if (shadow) {
+      canvasTemp.width = width
+      canvasTemp.height = height
+      const tempCtx = canvasTemp.getContext('2d')
+      if (!tempCtx) return
+
+      tempCtx.drawImage(
+        sprites,
+        tileX,
+        tileY,
+        width,
+        height,
+        0,
+        0,
+        width,
+        height
+      )
+      tempCtx.fillStyle = 'black'
+      tempCtx.globalCompositeOperation = 'source-in'
+      tempCtx.fillRect(0, 0, width, height)
+
+      const offsets = [
+        { dx: -1, dy: -1 },
+        { dx: 1, dy: -1 },
+        { dx: -1, dy: 0 },
+        { dx: 1, dy: 0 },
+        { dx: -1, dy: 1 },
+        { dx: 1, dy: 1 }
+      ]
+
+      for (const offset of offsets) {
+        context.drawImage(canvasTemp, x + offset.dx, y + offset.dy)
+      }
+    }
+
     context.globalAlpha = alpha
+
+    this.drawImageRect({
+      sx: tileX,
+      sy: tileY,
+      sw: width,
+      sh: height,
+      dx: x,
+      dy: y,
+      dw: width,
+      dh: height
+    })
+
     if (flipX || flipY || angle) {
       context.save()
       context.translate(rotationCenter.x, rotationCenter.y)
       context.scale(flip.x, flip.y)
       if (angle) context.rotate(angle)
       context.translate(-rotationCenter.x, -rotationCenter.y)
+      context.restore()
     }
 
-    const tileX = ((tile - 1) * width) % sprites.width
-    const tileY = Math.floor(((tile - 1) * width) / sprites.width) * height
-    if (tileX >= 0 && tileY >= 0) {
-      this.drawImageRect({
-        sx: tileX,
-        sy: tileY,
-        sw: width,
-        sh: height,
-        dx: x,
-        dy: y,
-        dw: width,
-        dh: height
-      })
-    }
-
-    if (flipX || flipY || angle) context.restore()
     context.globalAlpha = 1
   }
 

@@ -2,6 +2,7 @@ import { Canvas } from './core/canvas'
 import { Entities } from './core/entities'
 import { type Entity } from './core/entity'
 import { Fog } from './core/fog'
+import { type GameState } from './core/gameState'
 import { Input } from './core/input'
 import { Level } from './core/level'
 import { Text } from './core/text'
@@ -14,6 +15,7 @@ interface GameOptions {
   draw?: (dt: number) => void
   size?: number
   density?: number
+  state?: GameState
 }
 
 export class Game {
@@ -24,6 +26,7 @@ export class Game {
   players: Entity[] = []
   player: Entity | null = null
   text: Text
+  state: GameState | null = null
 
   canvas = new Canvas(document.getElementById('canvas') as HTMLCanvasElement)
   input = new Input(this.canvas.canvas)
@@ -31,21 +34,29 @@ export class Game {
   fog: Fog
 
   init = () => {}
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  update = (dt: number) => {}
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  draw = (dt: number) => {}
 
   constructor (options: Partial<GameOptions> = {}) {
-    const { size = 64, density = 0.65, init, update, draw } = options
+    const { size = 64, density = 0.65, init } = options
 
     this.map = new Level(size, density)
     this.fog = new Fog(size)
     this.text = new Text({ canvas: this.canvas })
 
     if (init) this.init = init
-    if (update) this.update = update
-    if (draw) this.draw = draw
+  }
+
+  update = (dt: number) => {
+    this.state?.update(dt)
+  }
+
+  draw = (dt: number) => {
+    this.state?.draw(dt)
+  }
+
+  // Set state
+  setState (state: GameState) {
+    this.state = state
+    this.state.init()
   }
 
   // Turn control methods
