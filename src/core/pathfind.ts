@@ -37,7 +37,7 @@ export function pathfind (
   const cols = grid[0].length
   const pq = new PriorityQueue()
 
-  if (grid[start.x][start.y] !== 0 || grid[end.x][end.y] !== 0) {
+  if (grid[start.y][start.x] !== 0 || grid[end.y][end.x] !== 0) {
     return null
   }
 
@@ -47,7 +47,7 @@ export function pathfind (
   const prev: Array<Array<Value2D | null>> = Array(rows)
     .fill(null)
     .map(() => Array(cols).fill(null))
-  distances[start.x][start.y] = 0
+  distances[start.y][start.x] = 0
 
   pq.enqueue(start, 0)
 
@@ -68,7 +68,7 @@ export function pathfind (
       const path: Value2D[] = []
       while (current) {
         path.push(current)
-        current = prev[current.x][current.y]
+        current = prev[current.y][current.x]
       }
       return path.reverse()
     }
@@ -78,16 +78,16 @@ export function pathfind (
       const newY = y + dir.y
 
       if (
-        newX >= 0 &&
-        newX < rows &&
         newY >= 0 &&
-        newY < cols &&
-        grid[newX][newY] === 0
+        newY < rows &&
+        newX >= 0 &&
+        newX < cols &&
+        grid[newY][newX] === 0
       ) {
-        const newDist = distances[x][y] + 1
-        if (newDist < distances[newX][newY]) {
-          distances[newX][newY] = newDist
-          prev[newX][newY] = { x, y }
+        const newDist = distances[y][x] + 1
+        if (newDist < distances[newY][newX]) {
+          distances[newY][newX] = newDist
+          prev[newY][newX] = { x, y }
           pq.enqueue({ x: newX, y: newY }, newDist)
         }
       }

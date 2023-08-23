@@ -6,8 +6,7 @@ import { createStateTitle } from './stateTitle'
 import { createStateGame } from './stateGame'
 
 const game = new Game({
-  size: 128,
-  density: 0.65
+  size: 64
 })
 
 const stateTitle = createStateTitle(game)

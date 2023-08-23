@@ -1,6 +1,6 @@
 import { type Value2D } from './value2d'
 
-type Grid = number[][]
+export type Grid = number[][]
 
 const neighbors: Value2D[] = [
   { x: -1, y: -1 },
@@ -17,24 +17,22 @@ export class Level {
   grid: Grid
   tiles: Grid
   size: number
-  density: number
 
-  constructor (size: number = 32, density: number = 0.5) {
+  constructor (size: number = 32) {
     this.size = size
-    this.density = density
     this.grid = this.init()
-    this.tiles = structuredClone(this.grid)
+    this.tiles = this.grid.map(row => [...row])
     this.generate(this.grid)
   }
 
   // Create grid with random values
   private init (): Grid {
-    const { density, size } = this
+    const { size } = this
     const grid: Grid = []
-    for (let i = 0; i < size; i += 1) {
-      grid[i] = []
-      for (let j = 0; j < size; j += 1) {
-        grid[i][j] = Math.random() > density ? 1 : 0
+    for (let y = 0; y < size; y += 1) {
+      grid[y] = []
+      for (let x = 0; x < size; x += 1) {
+        grid[y][x] = 0
       }
     }
     return grid
@@ -58,81 +56,112 @@ export class Level {
 
   // Next automata generation
   generate (grid: Grid): Grid {
-    const { size } = this
     const newGrid: Grid = []
-    for (let i = 0; i < size; i += 1) {
-      newGrid[i] = []
-      for (let j = 0; j < size; j += 1) {
-        newGrid[i][j] = this.neighbors(grid, i, j)
-      }
-    }
+
+    grid.forEach((row, y) => {
+      newGrid[y] = []
+      row.forEach((v, x) => {
+        newGrid[y][x] = this.neighbors(grid, x, y)
+      })
+    })
+
     return newGrid
   }
 
+  // Obtain a random position inside a quadrant
   randomQuadPos (quadrant: number): Value2D {
     if (quadrant < 1 || quadrant > 4) {
-      throw new Error('Invalid quadrant number. Must be between 1 and 4.')
+      throw new Error()
     }
 
-    const halfSize: number = this.size / 2
-    const startX: number = quadrant === 1 || quadrant === 3 ? 0 : halfSize
-    const startY: number = quadrant === 1 || quadrant === 2 ? 0 : halfSize
-
+    const halfSize = this.size / 2
     return {
-      x: startX + Math.floor(Math.random() * halfSize),
-      y: startY + Math.floor(Math.random() * halfSize)
+      x:
+        (quadrant === 1 || quadrant === 3 ? 0 : halfSize) +
+        Math.floor(Math.random() * halfSize),
+      y: (quadrant <= 2 ? 0 : halfSize) + Math.floor(Math.random() * halfSize)
     }
+  }
+
+  getRandomPosition (quadrant: number | null) {
+    let position: Value2D | null = null
+    while (!position) {
+      const possiblePosition = this.randomQuadPos(
+        quadrant ?? Math.floor(Math.random() * 4) + 1
+      )
+      if (this.grid[possiblePosition.y][possiblePosition.x] === 0) {
+        position = possiblePosition
+      }
+    }
+    return position
   }
 
   // Destroy blocks in and around the position
   destroy (position: Value2D): void {
     const { size, grid, tiles } = this
     const { x, y } = position
-    grid[x][y] = 0
-    tiles[x][y] = 0
+    grid[y][x] = 0
+    tiles[y][x] = 0
     neighbors.forEach(({ x: dx, y: dy }) => {
       const nx = x + dx
       const ny = y + dy
       if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
-        grid[nx][ny] = 0
-        tiles[nx][ny] = 0
+        grid[ny][nx] = 0
+        tiles[ny][nx] = 0
       }
     })
   }
 
-  private isBlockAllOnes (matrix: number[][], i: number, j: number, width: number, height: number): boolean {
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        if (matrix[i + y][j + x] !== 1) {
+  // Check if a block is all ones
+  private isBlockAllOnes (
+    grid: number[][],
+    y: number,
+    x: number,
+    height: number,
+    width: number
+  ): boolean {
+    for (let iy = 0; iy < height; iy++) {
+      for (let ix = 0; ix < width; ix++) {
+        if (grid[y + iy][x + ix] !== 1) {
           return false
         }
       }
     }
+
     return true
   }
 
-  private replaceBlock (matrix: number[][], i: number, j: number, replacement: number[][]): void {
-    const width = replacement[0].length
+  // Replace a block with a replacement
+  private replaceBlock (
+    grid: number[][],
+    y: number,
+    x: number,
+    replacement: number[][]
+  ): void {
     const height = replacement.length
+    const width = replacement[0].length
 
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        matrix[i + y][j + x] = replacement[x]?.[y]
+    for (let iy = 0; iy < height; iy++) {
+      for (let ix = 0; ix < width; ix++) {
+        grid[y + iy][x + ix] = replacement[iy]?.[ix]
       }
     }
   }
 
+  // Replace tiles with replacements
   replaceTiles (replacements: number[][][]): void {
-    let replacement = replacements[Math.floor(Math.random() * replacements.length)]
-    const width = replacement[0].length
+    let replacement =
+      replacements[Math.floor(Math.random() * replacements.length)]
     const height = replacement.length
-    const matrix = this.tiles
+    const width = replacement[0].length
+    const grid = this.tiles
 
-    for (let i = 0; i <= matrix.length - height; i++) {
-      for (let j = 0; j <= matrix[i].length - width; j++) {
-        if (this.isBlockAllOnes(matrix, i, j, width, height)) {
-          replacement = replacements[Math.floor(Math.random() * replacements.length)]
-          this.replaceBlock(matrix, i, j, replacement)
+    for (let y = 0; y <= grid.length - height; y++) {
+      for (let x = 0; x <= grid[y].length - width; x++) {
+        if (this.isBlockAllOnes(grid, y, x, height, width)) {
+          replacement =
+            replacements[Math.floor(Math.random() * replacements.length)]
+          this.replaceBlock(grid, y, x, replacement)
         }
       }
     }
@@ -144,6 +173,40 @@ export class Level {
       })
     })
 
-    this.tiles = matrix
+    this.tiles = grid
+  }
+
+  drawRandomBlocks (density: number): void {
+    const { grid } = this
+    const size = this.grid.length
+    const totalBlocks = Math.floor((size * size * density) / 4) // Un bloque es 2x2
+
+    for (let i = 0; i < totalBlocks; i++) {
+      let x = 0
+      let y = 0
+      let isSpaceAvailable = false
+
+      // Buscar una posición aleatoria para dibujar el bloque, pero asegurarnos de que hay espacio
+      while (!isSpaceAvailable) {
+        x = Math.floor(Math.random() * (size - 1)) // -1 porque queremos un espacio para 2x2
+        y = Math.floor(Math.random() * (size - 1))
+
+        if (
+          grid[y][x] === 0 &&
+          grid[y + 1][x] === 0 &&
+          grid[y][x + 1] === 0 &&
+          grid[y + 1][x + 1] === 0
+        ) {
+          isSpaceAvailable = true
+
+          this.grid[y][x] = 1
+          this.grid[y + 1][x] = 1
+          this.grid[y][x + 1] = 1
+          this.grid[y + 1][x + 1] = 1
+        }
+      }
+    }
+
+    this.tiles = this.grid.map(row => [...row])
   }
 }

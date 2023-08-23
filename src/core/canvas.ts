@@ -146,13 +146,14 @@ export class Canvas {
       tempCtx.globalCompositeOperation = 'source-in'
       tempCtx.fillRect(0, 0, width, height)
 
+      const v = 0.5
       const offsets = [
-        { dx: -1, dy: -1 },
-        { dx: 1, dy: -1 },
-        { dx: -1, dy: 0 },
-        { dx: 1, dy: 0 },
-        { dx: -1, dy: 1 },
-        { dx: 1, dy: 1 }
+        { dx: -v, dy: -v },
+        { dx: v, dy: -v },
+        { dx: -v, dy: 0 },
+        { dx: v, dy: 0 },
+        { dx: -v, dy: v },
+        { dx: v, dy: v }
       ]
 
       for (const offset of offsets) {

@@ -36,9 +36,9 @@ export class Game {
   init = () => {}
 
   constructor (options: Partial<GameOptions> = {}) {
-    const { size = 64, density = 0.65, init } = options
+    const { size = 64, init } = options
 
-    this.map = new Level(size, density)
+    this.map = new Level(size)
     this.fog = new Fog(size)
     this.text = new Text({ canvas: this.canvas })
 
@@ -80,21 +80,21 @@ export class Game {
 
   // Rendering methods
   drawMap () {
-    this.map.tiles.forEach((row, x) => {
-      row.forEach((tile, y) => {
+    for (let y = 0; y < this.map.size; y += 1) {
+      for (let x = 0; x < this.map.size; x += 1) {
         // Draw tile considering camera position
         this.canvas.drawTile({
           x: Math.round(x * Sprites.size - this.camera.x),
           y: Math.round(y * Sprites.size - this.camera.y),
-          tile: tile + 1
+          tile: this.map.tiles[y][x] + 1
         })
-      })
-    })
+      }
+    }
   }
 
   drawFog () {
-    this.fog.grid.forEach((row, x) => {
-      row.forEach((tile, y) => {
+    this.fog.grid.forEach((row, y) => {
+      row.forEach((tile, x) => {
         if (tile === 0) return
         const color = tile < 1 ? `rgba(0, 0, 0, ${tile})` : 'rgba(0, 0, 0, 1)'
         this.canvas.drawRect(

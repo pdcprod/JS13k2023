@@ -1,6 +1,9 @@
 import { Entities } from './core/entities'
 import { GameState } from './core/gameState'
+import { Grid } from './core/level'
+import { pathfind } from './core/pathfind'
 import { Tween } from './core/tween'
+import { Value2D } from './core/value2d'
 import { createPlayer } from './entityPlayer'
 import { type Game } from './game'
 import Sprites from './sprites'
@@ -24,38 +27,70 @@ export const createStateGame = (game: Game) => {
 
       const { entities, fog, map, players } = game
 
-      // Generate map
+      // Draw border around map
+      map.grid.forEach((row, y) => {
+        row.forEach((tile, x) => {
+          if (x < 2 || y < 2 || x >= map.size - 2 || y >= map.size - 2) {
+            map.grid[y][x] = 1
+          }
+        })
+      })
+
+      // Make space for 2x2 trees
+      map.drawRandomBlocks(0.25)
+
+      // Replace 2D sets of sprites
       map.replaceTiles(Sprites.terrain.tree)
-      map.replaceTiles([
-        [[0], [0]]
-      ])
-      map.replaceTiles([
-        [[62, 62]],
-        [[63, 63]]
-      ])
-      map.replaceTiles([
-        [[0]]
-      ])
-      map.tiles.forEach((row, x) => {
-        row.forEach((tile, y) => {
+
+      // Draw paths
+      let attempts = 0
+      let successfulPaths = 0
+      while (attempts < 10 && successfulPaths < 30) {
+        const position1 = map.getRandomPosition(null)
+        const position2 = map.getRandomPosition(null)
+        const possiblePath = pathfind(map.grid, position1, position2)
+
+        if (possiblePath) {
+          const roadType =
+            Sprites.terrain.roads[
+              Math.floor(Math.random() * Sprites.terrain.roads.length)
+            ]
+          possiblePath.forEach((p) => {
+            map.tiles[p.y][p.x] = roadType
+          })
+          successfulPaths += 1
+        }
+
+        attempts += 1
+      }
+
+      map.tiles.forEach((row, y) => {
+        row.forEach((tile, x) => {
           // 15% chance to replace with random item from Sprites.terrain.grass
           if (Math.random() > 0.85 && tile === 0) {
-            map.tiles[x][y] = Sprites.terrain.grass[Math.floor(Math.random() * Sprites.terrain.grass.length)]
+            map.tiles[y][x] =
+              Sprites.terrain.grass[
+                Math.floor(Math.random() * Sprites.terrain.grass.length)
+              ]
           }
         })
       })
 
       // Init 4 Players
       for (let i = 0; i < 4; i++) {
-        const position = map.randomQuadPos(i + 1)
+        let position = null
+        while (!position) {
+          const possiblePosition = map.randomQuadPos(i + 1)
+          if (map.grid[possiblePosition.y][possiblePosition.x] === 0) {
+            position = possiblePosition
+          }
+        }
         const p = entities.add(createPlayer(game))
 
         p.npc = i > 0
+        p.steps = p.npc ? 8 : 16
         p.tile = Sprites.characters[i]
         p.position = position
-
-        // Destroy around
-        map.destroy(p.position)
 
         p.tween = new Tween({
           duration: 0.25,
@@ -63,7 +98,10 @@ export const createStateGame = (game: Game) => {
             x: Math.round(p.position.x),
             y: Math.round(p.position.y)
           },
-          endValue: { x: Math.round(p.position.x), y: Math.round(p.position.y) },
+          endValue: {
+            x: Math.round(p.position.x),
+            y: Math.round(p.position.y)
+          },
           callback: (tween) => {
             p.position.x = tween.x
             p.position.y = tween.y
@@ -73,7 +111,7 @@ export const createStateGame = (game: Game) => {
                 x: Math.round(p.position.x),
                 y: Math.round(p.position.y)
               }
-              fog.clearCircle(p.position.y, p.position.x, 8)
+              fog.clearCircle(p.position.x, p.position.y, 8)
             }
           }
         })
@@ -112,8 +150,14 @@ export const createStateGame = (game: Game) => {
 
       // Limit player position to level borders
       if (player) {
-        player.position.x = Math.max(0, Math.min(player.position.x, map.size - 1))
-        player.position.y = Math.max(0, Math.min(player.position.y, map.size - 1))
+        player.position.x = Math.max(
+          0,
+          Math.min(player.position.x, map.size - 1)
+        )
+        player.position.y = Math.max(
+          0,
+          Math.min(player.position.y, map.size - 1)
+        )
       }
 
       entities.update()
@@ -123,7 +167,11 @@ export const createStateGame = (game: Game) => {
       })
 
       // Player input
-      if (stateGameData.elapsedTime > 3000 && game.input.keys.get(13) && turnPlayer) {
+      if (
+        stateGameData.elapsedTime > 3000 &&
+        game.input.keys.get(13) &&
+        !turnPlayer?.npc
+      ) {
         game.turnNext()
       }
     },

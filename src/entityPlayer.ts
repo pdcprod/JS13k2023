@@ -78,7 +78,8 @@ export const createPlayer = (game: Game) => {
         }
 
         if (attemptCount === maxAttempts) {
-          console.warn('Failed to find a path after maximum attempts.')
+          console.warn('Stuck')
+          this.position = game.map.randomQuadPos(game.players.findIndex(p => p.id === this.id))
           game.turnNext()
         }
 
