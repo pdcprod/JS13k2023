@@ -1,9 +1,10 @@
 import { Entities } from './core/entities'
 import { GameState } from './core/gameState'
-import { Grid } from './core/level'
 import { pathfind } from './core/pathfind'
 import { Tween } from './core/tween'
-import { Value2D } from './core/value2d'
+import { getRandomItem } from './core/utils'
+import { type Value2D } from './core/value2d'
+import { createBuilding } from './entityBuilding'
 import { createPlayer } from './entityPlayer'
 import { type Game } from './game'
 import Sprites from './sprites'
@@ -41,6 +42,44 @@ export const createStateGame = (game: Game) => {
 
       // Replace 2D sets of sprites
       map.replaceTiles(Sprites.terrain.tree)
+
+      const buildingPositions: Value2D[] = []
+      for (let i = 0; i < 64; i++) {
+        const pos = map.getRandom2x2EmptySpace()
+
+        // Check if pos exist in buildingPositions
+        if (!pos || buildingPositions.some((p) => {
+          return [p.x - 1, p.x, p.x + 1].includes(pos.x) && [p.y - 1, p.y, p.y + 1].includes(pos.y)
+        })) {
+          continue
+        }
+
+        buildingPositions.push(pos)
+
+        entities.add(
+          createBuilding(game, {
+            position: pos,
+            tile: getRandomItem([
+              Sprites.buildings.windmill,
+              Sprites.buildings.tower,
+              Sprites.buildings.house,
+              Sprites.buildings.portal,
+              Sprites.buildings.churchLarge,
+              Sprites.buildings.churchSmall,
+              Sprites.buildings.blacksmith,
+              Sprites.buildings.camp,
+              Sprites.buildings.volcano,
+              Sprites.buildings.tavern,
+              Sprites.buildings.waterfall,
+              Sprites.buildings.castle,
+              Sprites.buildings.structure,
+              Sprites.buildings.potion,
+              Sprites.buildings.farm,
+              Sprites.buildings.cave
+            ])
+          })
+        )
+      }
 
       // Draw paths
       let attempts = 0
@@ -204,16 +243,17 @@ export const createStateGame = (game: Game) => {
       const currentPlayer = game.turnPlayer
       if (!currentPlayer) return
 
+      // Bottom
       canvas.drawRect(
         0,
-        game.canvas.canvas.height - 10,
+        game.canvas.canvas.height - 7,
         game.canvas.canvas.width,
-        10,
-        'rgb(31, 44, 60)'
+        7,
+        'rgb(31, 44, 60, 0.8)'
       )
       game.text.draw({
-        x: 4,
-        y: game.canvas.canvas.height - 7,
+        x: 2,
+        y: game.canvas.canvas.height - 6,
         string: currentPlayer.npc
           ? 'The enemy is moving forward'
           : 'Press Enter to finish turn',
@@ -222,13 +262,55 @@ export const createStateGame = (game: Game) => {
 
       if (!currentPlayer.npc) {
         game.text.draw({
-          x: game.canvas.canvas.width - 4,
-          y: game.canvas.canvas.height - 7,
+          x: game.canvas.canvas.width - 2,
+          y: game.canvas.canvas.height - 6,
           align: 'right',
           string: `Steps: ${currentPlayer.stepsRemaining}`,
           color: '#ffffff'
         })
       }
+
+      // Top
+      canvas.drawRect(
+        0,
+        0,
+        game.canvas.canvas.width,
+        7,
+        'rgb(31, 44, 60, 0.8)'
+      )
+
+      game.text.draw({
+        x: 2,
+        y: 1,
+        string: 'Day 1, Week 1',
+        color: '#ffffff'
+      })
+
+      // Modal
+      /*
+      const modalPosition = { x: game.canvas.canvas.width / 4, y: game.canvas.canvas.height / 4 }
+      canvas.drawRect(
+        modalPosition.x,
+        modalPosition.y,
+        game.canvas.canvas.width / 2,
+        game.canvas.canvas.height / 2,
+        'rgb(31, 44, 60, 0.8)'
+      )
+      game.text.draw({
+        x: modalPosition.x * 2,
+        y: modalPosition.y + 1,
+        string: 'You encounter',
+        color: '#ffffff',
+        align: 'center'
+      })
+      game.text.draw({
+        x: modalPosition.x * 2,
+        y: modalPosition.y + 8,
+        string: 'a treasure chest',
+        color: '#ffffff',
+        align: 'center'
+      })
+      */
     }
   })
 }

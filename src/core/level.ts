@@ -21,7 +21,7 @@ export class Level {
   constructor (size: number = 32) {
     this.size = size
     this.grid = this.init()
-    this.tiles = this.grid.map(row => [...row])
+    this.tiles = this.grid.map((row) => [...row])
     this.generate(this.grid)
   }
 
@@ -179,16 +179,18 @@ export class Level {
   drawRandomBlocks (density: number): void {
     const { grid } = this
     const size = this.grid.length
-    const totalBlocks = Math.floor((size * size * density) / 4) // Un bloque es 2x2
+    // 2x2 block
+    const totalBlocks = Math.floor((size * size * density) / 4)
 
     for (let i = 0; i < totalBlocks; i++) {
       let x = 0
       let y = 0
       let isSpaceAvailable = false
 
-      // Buscar una posición aleatoria para dibujar el bloque, pero asegurarnos de que hay espacio
+      // Check if there is space for a 2x2 block
       while (!isSpaceAvailable) {
-        x = Math.floor(Math.random() * (size - 1)) // -1 porque queremos un espacio para 2x2
+        // -1 because we need to have space for the 2x2 block
+        x = Math.floor(Math.random() * (size - 1))
         y = Math.floor(Math.random() * (size - 1))
 
         if (
@@ -207,6 +209,34 @@ export class Level {
       }
     }
 
-    this.tiles = this.grid.map(row => [...row])
+    this.tiles = this.grid.map((row) => [...row])
+  }
+
+  findAll2x2EmptySpaces (): Value2D[] {
+    const { grid } = this
+    const spaces: Value2D[] = []
+    const rows = grid.length
+    const cols = grid[0].length
+
+    for (let y = 0; y < rows - 1; y++) {
+      for (let x = 0; x < cols - 1; x++) {
+        if (
+          grid[y][x] === 0 &&
+          grid[y + 1][x] === 0 &&
+          grid[y][x + 1] === 0 &&
+          grid[y + 1][x + 1] === 0
+        ) {
+          spaces.push({ x, y })
+        }
+      }
+    }
+
+    return spaces
+  }
+
+  getRandom2x2EmptySpace (): Value2D | null {
+    const spaces = this.findAll2x2EmptySpaces()
+    if (spaces.length === 0) return null
+    return spaces[Math.floor(Math.random() * spaces.length)]
   }
 }

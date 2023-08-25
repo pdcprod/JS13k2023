@@ -42,6 +42,7 @@ export const createPlayer = (game: Game) => {
 
   return new Entity({
     game,
+    type: 'player',
     update () {
       const { camera, input, map } = game
       const { id, position, tween } = this
@@ -51,6 +52,16 @@ export const createPlayer = (game: Game) => {
 
       // Move player along path
       movePath(this)
+
+      if (!this.path) {
+        // Check if is over a building
+        const entity = game.entities.list.find((e: Entity) => {
+          return e.id !== id && [e.position.x, e.position.x + 1].includes(position?.x ?? 0) && [e.position.y, e.position.y + 1].includes(position?.y ?? 0)
+        })
+        if (entity) {
+          entity.check(this)
+        }
+      }
 
       // NPC AI
       if (this.npc) {
