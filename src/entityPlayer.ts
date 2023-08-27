@@ -1,5 +1,6 @@
 import { Entity } from './core/entity'
 import { pathfind } from './core/pathfind'
+import { getRandomItem } from './core/utils'
 import { type Value2D } from './core/value2d'
 import { type Game } from './game'
 import Sprites from './sprites'
@@ -15,19 +16,22 @@ const movePath = (entity: Partial<Entity>) => {
     tween?.isFinished() &&
     position
   ) {
-    if (entity.pathIndex === undefined || !entity.path[entity.pathIndex]) return
+    if (entity.pathIndex === undefined || !entity.path[entity.pathIndex]) {
+      return
+    }
 
     tween.reset({
       startValue: position,
       endValue: entity.path[entity.pathIndex],
       onComplete: () => {
-        console.log('Tween complete')
+        entity.path = null
       }
     })
 
-    entity.flipX = position.x && entity.path[entity.pathIndex].x
-      ? entity.path[entity.pathIndex].x < position.x
-      : false
+    entity.flipX =
+      position.x && entity.path[entity.pathIndex].x
+        ? entity.path[entity.pathIndex].x < position.x
+        : false
     entity.pathIndex += 1
     entity.stepsRemaining -= 1
 
@@ -35,6 +39,26 @@ const movePath = (entity: Partial<Entity>) => {
       entity.path = null
     }
   }
+}
+
+// Find closest entity to position
+const findClosestEntity = (
+  entities: Entity[],
+  position: Value2D
+): Entity | null => {
+  let closestEntity: Entity | null = null
+  let closestDistance: number = Infinity
+  entities.forEach((entity) => {
+    const distance = Math.sqrt(
+      (position.x - entity.position.x) ** 2 +
+        (position.y - entity.position.y) ** 2
+    )
+    if (distance < closestDistance) {
+      closestEntity = entity
+      closestDistance = distance
+    }
+  })
+  return closestEntity
 }
 
 export const createPlayer = (game: Game) => {
@@ -53,15 +77,24 @@ export const createPlayer = (game: Game) => {
       // Move player along path
       movePath(this)
 
-      if (!this.path) {
+      if (!this.path || this.path.length === 0) {
         // Check if is over a building
         const entity = game.entities.list.find((e: Entity) => {
-          return e.id !== id && [e.position.x, e.position.x + 1].includes(position?.x ?? 0) && [e.position.y, e.position.y + 1].includes(position?.y ?? 0)
+          return (
+            e.id !== id &&
+            [e.position.x, e.position.x + 1].includes(position?.x ?? 0) &&
+            [e.position.y, e.position.y + 1].includes(position?.y ?? 0) &&
+            e.owner?.id !== id
+          )
         })
         if (entity) {
           entity.check(this)
+          return
         }
       }
+
+      // Moving, dont bother
+      if ((this.path && this.path.length > 0) ?? !tween?.disabled) { return }
 
       // NPC AI
       if (this.npc) {
@@ -71,33 +104,61 @@ export const createPlayer = (game: Game) => {
           return
         }
 
-        // Find a new random path
-        const maxAttempts = 10
+        if (!position || (this.path && this.path?.length > 0)) return
+
+        const closestEntity = findClosestEntity(
+          game.entities.list.filter((e) => e.id !== id && e.position.x !== position.x && e.position.y !== position.y && e.owner?.id !== id),
+          position
+        )
+
+        if (closestEntity) {
+          const newPathToEntity: Value2D[] | null = position
+            ? pathfind(game.map.grid, position, closestEntity.position)
+            : null
+
+          if (
+            newPathToEntity &&
+            newPathToEntity.length <= this.stepsRemaining + 1
+          ) {
+            this.path = newPathToEntity.slice(1, this.stepsRemaining + 1)
+            this.pathIndex = 0
+            console.log('cpu has a path to entity', newPathToEntity)
+            return // Exit the update function since a path has been found
+          }
+        }
+
+        // If couldn't find a path to the entity or not enough stepsRemaining, try random positions
         let attemptCount = 0
+        const maxAttempts = 32
         let newPath: Value2D[] | null = null
         while (
           !this.path &&
-          (!newPath || newPath?.length === 0) &&
+          (!newPath ||
+            newPath?.length === 0) && // ||
+          // newPath.length > this.stepsRemaining + 1) && // Check if newPath fits within stepsRemaining
           attemptCount < maxAttempts
         ) {
-          console.log('attempting to find a path')
-          const possiblePosition = game.map.randomQuadPos(1)
+          console.log('attempting to find a random path')
+          const empty = game.map.findAll1x1EmptySpaces()
+          const possiblePosition = getRandomItem(empty)
           if (position) {
             newPath = pathfind(game.map.grid, position, possiblePosition)
+            console.log('trying', possiblePosition, 'from', position, 'result', newPath)
           }
           attemptCount++
         }
 
         if (attemptCount === maxAttempts) {
           console.warn('Stuck')
-          this.position = game.map.randomQuadPos(game.players.findIndex(p => p.id === this.id))
           game.turnNext()
-        }
-
-        if (newPath) {
+        } else if (newPath) {
           this.path = newPath.slice(1, this.stepsRemaining + 1)
           this.pathIndex = 0
-          console.log('cpu has a path', newPath)
+          console.log('cpu has a random path', newPath)
+        }
+
+        if (this.path?.length === 0) {
+          this.path = null
         }
       }
 

@@ -133,4 +133,44 @@ export class Text {
       startX += charWidth // Move to the start of the next character.
     }
   }
+
+  // Add this method
+  drawMultilineText ({ string, width, x, y, color }: {
+    string: string
+    width: number
+    x: number
+    y: number
+    color: string
+  }) {
+    const words = string.split(' ')
+    let currentLine = ''
+    let lineY = 0
+
+    for (const word of words) {
+      if ((currentLine + word).length > width) {
+        this.draw({
+          string: currentLine,
+          x,
+          y: y + lineY,
+          color: '#ffffff',
+          align: 'center'
+        })
+        currentLine = word + ' '
+        lineY += 7
+      } else {
+        currentLine += word + ' '
+      }
+    }
+
+    // Draw the last accumulated line if any.
+    if (currentLine.trim().length) {
+      this.draw({
+        string: currentLine,
+        x,
+        y: y + lineY,
+        color: '#ffffff',
+        align: 'center'
+      })
+    }
+  }
 }

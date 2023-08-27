@@ -212,6 +212,23 @@ export class Level {
     this.tiles = this.grid.map((row) => [...row])
   }
 
+  findAll1x1EmptySpaces (): Value2D[] {
+    const { grid } = this
+    const spaces: Value2D[] = []
+    const rows = grid.length
+    const cols = grid[0].length
+
+    for (let y = 0; y < rows - 1; y++) {
+      for (let x = 0; x < cols - 1; x++) {
+        if (grid[y][x] === 0) {
+          spaces.push({ x, y })
+        }
+      }
+    }
+
+    return spaces
+  }
+
   findAll2x2EmptySpaces (): Value2D[] {
     const { grid } = this
     const spaces: Value2D[] = []

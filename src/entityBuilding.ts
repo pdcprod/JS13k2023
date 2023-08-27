@@ -4,7 +4,6 @@ import Sprites from './sprites'
 
 export const createBuilding = (game: Game, properties: Partial<EntityOptions>) => {
   let selected = false
-  let owner: Partial<Entity> | null = null
 
   return new Entity({
     type: 'building',
@@ -58,7 +57,7 @@ export const createBuilding = (game: Game, properties: Partial<EntityOptions>) =
         })
       }
 
-      if (position && owner) {
+      if (position && this.owner) {
         canvas.drawTile({
           x: Math.round((position.x + 1) * Sprites.size - camera.x),
           y: Math.round((position.y + 1) * Sprites.size - camera.y),
@@ -69,7 +68,7 @@ export const createBuilding = (game: Game, properties: Partial<EntityOptions>) =
 
     check (other) {
       if (other.type === 'player') {
-        owner = other
+        this.owner = other
       }
     }
   })

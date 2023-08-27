@@ -12,6 +12,7 @@ export interface EntityOptions {
   game: Game
   id?: string
   npc: boolean
+  owner: Partial<Entity> | null
   path?: Value2D[] | null
   pathIndex: number
   position: Value2D
@@ -32,6 +33,7 @@ export class Entity implements EntityOptions {
   game: Game
   id = uniqueId()
   npc = true
+  owner: Partial<Entity> | null = null
   path: Value2D[] | null = null
   pathIndex = 0
   position: Value2D
@@ -55,5 +57,6 @@ export class Entity implements EntityOptions {
     this.update = options.update ?? (() => {})
     this.draw = options.draw ?? (() => {})
     this.check = options.check ?? (() => {})
+    this.owner = options.owner ?? null
   }
 }

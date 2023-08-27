@@ -16,6 +16,12 @@ let stateGameData = {
   }
 }
 
+const modal = {
+  title: '',
+  text: '',
+  open: false
+}
+
 export const createStateGame = (game: Game) => {
   return new GameState({
     game,
@@ -260,15 +266,15 @@ export const createStateGame = (game: Game) => {
         color: '#ffffff'
       })
 
-      if (!currentPlayer.npc) {
-        game.text.draw({
-          x: game.canvas.canvas.width - 2,
-          y: game.canvas.canvas.height - 6,
-          align: 'right',
-          string: `Steps: ${currentPlayer.stepsRemaining}`,
-          color: '#ffffff'
-        })
-      }
+      // if (!currentPlayer.npc) {
+      game.text.draw({
+        x: game.canvas.canvas.width - 2,
+        y: game.canvas.canvas.height - 6,
+        align: 'right',
+        string: `Steps: ${currentPlayer.stepsRemaining}`,
+        color: '#ffffff'
+      })
+      // }
 
       // Top
       canvas.drawRect(
@@ -286,31 +292,51 @@ export const createStateGame = (game: Game) => {
         color: '#ffffff'
       })
 
+      if (!currentPlayer.npc) {
+        game.text.draw({
+          x: game.canvas.canvas.width - 2,
+          y: 1,
+          string: `Pos: ${Math.round(currentPlayer.position.x)}, ${Math.round(currentPlayer.position.y)}`,
+          color: '#ffffff',
+          align: 'right'
+        })
+      }
+
       // Modal
-      /*
-      const modalPosition = { x: game.canvas.canvas.width / 4, y: game.canvas.canvas.height / 4 }
-      canvas.drawRect(
-        modalPosition.x,
-        modalPosition.y,
-        game.canvas.canvas.width / 2,
-        game.canvas.canvas.height / 2,
-        'rgb(31, 44, 60, 0.8)'
-      )
-      game.text.draw({
-        x: modalPosition.x * 2,
-        y: modalPosition.y + 1,
-        string: 'You encounter',
-        color: '#ffffff',
-        align: 'center'
-      })
-      game.text.draw({
-        x: modalPosition.x * 2,
-        y: modalPosition.y + 8,
-        string: 'a treasure chest',
-        color: '#ffffff',
-        align: 'center'
-      })
-      */
+      if (modal.open) {
+        const modalPosition = { x: game.canvas.canvas.width / 4, y: game.canvas.canvas.height / 4 }
+        const separator = '------------------- '
+
+        canvas.drawRect(
+          modalPosition.x,
+          modalPosition.y,
+          game.canvas.canvas.width / 2,
+          game.canvas.canvas.height / 2,
+          'rgb(31, 44, 60, 0.8)'
+        )
+        game.text.draw({
+          x: modalPosition.x * 2,
+          y: modalPosition.y + 1,
+          string: 'You encounter',
+          color: '#ffffff',
+          align: 'center'
+        })
+        game.text.draw({
+          x: modalPosition.x * 2,
+          y: modalPosition.y + 8,
+          string: 'a treasure chest',
+          color: '#ffffff',
+          align: 'center'
+        })
+
+        game.text.drawMultilineText({
+          string: `${separator}This is a multiline text to test the new function`,
+          width: 22,
+          x: 108,
+          y: 45,
+          color: '#ffffff'
+        })
+      }
     }
   })
 }
